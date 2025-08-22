@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Chosen Palette: Earthy & grounded -->
+    <!-- Application Structure Plan: A aplicação foi estruturada como uma narrativa visual de página única com navegação por seções temáticas. A arquitetura segue uma lógica de "problema -> solução -> aprofundamento -> aplicação", guiando o usuário de forma intuitiva. Em vez de um scroll longo, o usuário navega por abas, focando em um tópico por vez (O Problema, A Solução, Análise de Dados, O Modelo, Alertas e Ação). Esta estrutura foi escolhida para transformar um relatório técnico denso em uma experiência de aprendizado segmentada e de fácil digestão, permitindo que diferentes públicos (gestores, acadêmicos, estudantes) explorem as seções de maior interesse de forma não-linear. A interatividade foca em explorar os dados dos gráficos e entender as categorias de alerta. Uma seção de quiz foi adicionada ao final para reforçar o aprendizado. -->
+    <!-- Visualization & Content Choices: 1. Report Info: Crise Hídrica (KPI 96,9%) -> Goal: Inform -> Viz/Presentation: Grande número destacado (HTML/CSS) -> Interaction: Estático -> Justification: Cria impacto visual imediato para o problema central -> Method: HTML/Tailwind. 2. Report Info: Fluxo do Projeto -> Goal: Organize -> Viz/Presentation: Diagrama de processo (HTML/CSS) -> Interaction: Estático -> Justification: Explica o pipeline do projeto de forma clara e visual sem usar SVG/Mermaid -> Method: HTML/Flexbox/Tailwind. 3. Report Info: Relação Chuva vs. NDVI -> Goal: Change -> Viz/Presentation: Gráfico combinado de barras e linhas (Chart.js) -> Interaction: Tooltip ao passar o mouse -> Justification: Mostra a correlação e a crucial defasagem temporal de forma interativa -> Library: Chart.js/Canvas. 4. Report Info: Performance do Modelo (R²) -> Goal: Inform -> Viz/Presentation: Gráfico de Donut (Chart.js) -> Interaction: Tooltip ao passar o mouse -> Justification: Simples e eficaz para mostrar a proporção de variância explicada -> Library: Chart.js/Canvas. 5. Report Info: Importância das Variáveis -> Goal: Compare -> Viz/Presentation: Gráfico de barras horizontais (Chart.js) -> Interaction: Tooltip ao passar o mouse -> Justification: Ideal para comparar e ranquear o impacto de cada variável no modelo -> Library: Chart.js/Canvas. 6. Report Info: Níveis de Alerta -> Goal: Organize/Inform -> Viz/Presentation: Cartões interativos (HTML/CSS) -> Interaction: Efeito de hover para destaque -> Justification: Apresenta as categorias de alerta de forma segmentada e visualmente clara -> Method: HTML/Tailwind. 7. Report Info: Quiz -> Goal: Engage/Reinforce -> Viz/Presentation: Quiz interativo (HTML/JS) -> Interaction: Seleção de respostas e feedback -> Justification: Engaja o usuário e testa o conhecimento adquirido de forma dinâmica -> Method: HTML/JS. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <title>SPH Cerrado - Análise Interativa</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F5F5DC; /* Beige */
+            color: #4A4A4A;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 45vh;
+            max-height: 450px;
+        }
+        .kpi-value {
+            font-weight: 900;
+            color: #A0522D; /* Sienna */
+        }
+        .nav-link {
+            transition: color 0.3s, border-color 0.3s;
+            border-bottom: 2px solid transparent;
+            padding-bottom: 4px;
+        }
+        .nav-link.active, .nav-link:hover {
+            color: #A0522D;
+            border-bottom-color: #A0522D;
+        }
+        .section-card {
+            background-color: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+        .alert-card {
+            transition: all 0.3s ease-in-out;
+        }
+        .alert-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .quiz-option {
+            transition: all 0.2s ease-in-out;
+        }
+        .quiz-option.selected {
+            background-color: #D2B48C;
+            color: white;
+            border-color: #A0522D;
+        }
+        .quiz-option.correct {
+            background-color: #8FBC8F;
+            color: white;
+            border-color: #2E8B57;
+        }
+        .quiz-option.incorrect {
+            background-color: #F08080;
+            color: white;
+            border-color: #CD5C5C;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <header class="bg-white/80 backdrop-blur-md sticky top-0 z-50 shadow-sm">
+        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="font-bold text-xl text-[#A0522D]">SPH Cerrado</div>
+            <div class="hidden md:flex space-x-8" id="nav-menu">
+                <a href="#problema" class="nav-link font-semibold active">O Problema</a>
+                <a href="#solucao" class="nav-link font-semibold">A Solução</a>
+                <a href="#analise" class="nav-link font-semibold">Análise de Dados</a>
+                <a href="#modelo" class="nav-link font-semibold">Modelo Preditivo</a>
+                <a href="#alertas" class="nav-link font-semibold">Alertas e Ação</a>
+                <a href="#cidadao" class="nav-link font-semibold">Ciência Cidadã</a>
+                <a href="#quiz" class="nav-link font-semibold">Quiz</a>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto px-6 py-12">
+
+        <section id="problema" class="min-h-[80vh] flex items-center">
+            <div class="text-center w-full">
+                <h1 class="text-4xl md:text-6xl font-black mb-4">A Crise Hídrica Anunciada</h1>
+                <p class="max-w-3xl mx-auto text-lg mb-8">Em 2017, o Distrito Federal enfrentou um racionamento severo de água. Mas a crise não foi uma surpresa. Anos antes, os sinais já eram claros.</p>
+                <div class="section-card rounded-lg p-8 inline-block">
+                    <p class="text-6xl md:text-8xl kpi-value">96,9%</p>
+                    <p class="font-semibold mt-2 text-gray-700">da capacidade de fornecimento</p>
+                    <p class="text-sm text-gray-500 max-w-xs mx-auto">já era atingida em dias de pico em 2010, segundo o TCDF, sete anos antes da crise se materializar.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="solucao" class="min-h-screen flex flex-col justify-center">
+            <h2 class="text-3xl font-bold text-center mb-4">Uma Nova Abordagem: Da Reação à Previsão</h2>
+            <p class="text-center max-w-3xl mx-auto mb-12">Para evitar futuras crises, o projeto SPH Cerrado propõe uma mudança de paradigma, integrando tecnologia de ponta e participação comunitária para antecipar os riscos.</p>
+            <div class="flex flex-col md:flex-row justify-center items-center gap-4 text-center font-semibold text-sm">
+                <div class="p-4 section-card rounded-lg w-full md:w-48 h-32 flex flex-col justify-center">🛰️<br>Monitoramento Remoto<br><span class="text-xs font-normal text-gray-500">Dados de Satélite (GEE)</span></div>
+                <div class="text-2xl text-gray-400 font-sans transform md:-rotate-0 rotate-90">→</div>
+                <div class="p-4 section-card rounded-lg w-full md:w-48 h-32 flex flex-col justify-center">🧠<br>Modelagem Preditiva<br><span class="text-xs font-normal text-gray-500">Machine Learning</span></div>
+                <div class="text-2xl text-gray-400 font-sans transform md:-rotate-0 rotate-90">→</div>
+                <div class="p-4 section-card rounded-lg w-full md:w-48 h-32 flex flex-col justify-center">📊<br>Sistema de Alertas<br><span class="text-xs font-normal text-gray-500">Baseado em Percentis</span></div>
+                <div class="text-2xl text-gray-400 font-sans transform md:-rotate-0 rotate-90">→</div>
+                <div class="p-4 section-card rounded-lg w-full md:w-48 h-32 flex flex-col justify-center">👥<br>Ciência Cidadã<br><span class="text-xs font-normal text-gray-500">App Mangaba Cerrado</span></div>
+            </div>
+        </section>
+
+        <section id="analise" class="min-h-screen flex flex-col justify-center">
+            <h2 class="text-3xl font-bold text-center mb-4">Entendendo o Pulso do Cerrado</h2>
+            <p class="text-center max-w-3xl mx-auto mb-10">A análise de uma década de dados de satélite revela a forte sazonalidade do bioma e uma descoberta crucial: a vegetação não responde à chuva imediatamente. Existe uma defasagem, uma janela de tempo valiosa para a previsão. Passe o mouse sobre o gráfico para explorar os dados.</p>
+            <div class="section-card rounded-lg p-6">
+                <div class="chart-container">
+                    <canvas id="precipNdviChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <section id="modelo" class="min-h-screen flex flex-col justify-center">
+            <h2 class="text-3xl font-bold text-center mb-10">O Coração do Sistema: O Modelo Preditivo</h2>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-center">
+                <div class="lg:col-span-1 section-card rounded-lg p-6 text-center">
+                    <h3 class="font-bold text-lg mb-2">Performance do Modelo</h3>
+                    <p class="text-sm text-gray-600 mb-4">O modelo Random Forest consegue explicar a maior parte da variação da umidade do solo.</p>
+                    <div class="chart-container" style="height: 200px; max-height: 200px;">
+                        <canvas id="modelAccuracyChart"></canvas>
+                    </div>
+                </div>
+                <div class="lg:col-span-2 section-card rounded-lg p-6">
+                     <h3 class="font-bold text-lg mb-2 text-center">O Que o Modelo Aprendeu?</h3>
+                    <p class="text-center text-sm text-gray-600 mb-4">A análise revela que a perda de água (Evapotranspiração) e a presença de água na paisagem (MNDWI) são indicadores mais poderosos para prever a seca do que a própria Precipitação.</p>
+                    <div class="chart-container" style="height: 280px; max-height: 280px;">
+                        <canvas id="featureImportanceChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="alertas" class="min-h-screen flex flex-col justify-center">
+            <h2 class="text-3xl font-bold text-center mb-4">Da Previsão à Ação: O Sistema de Alertas</h2>
+            <p class="text-center max-w-3xl mx-auto mb-10">As previsões do modelo são traduzidas em um sistema de alerta de quatro níveis, comparando a umidade prevista com os dados históricos para determinar a severidade da seca. Isso permite que gestores e a comunidade tomem ações preventivas.</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 text-center">
+                <div class="alert-card bg-white p-6 rounded-lg shadow-md border-b-4 border-green-400">
+                    <p class="text-2xl mb-2">✅</p>
+                    <p class="font-bold text-green-700">Normal</p>
+                    <p class="text-xs text-gray-500 mt-1">Condições de umidade adequadas para a época.</p>
+                </div>
+                <div class="alert-card bg-white p-6 rounded-lg shadow-md border-b-4 border-yellow-400">
+                    <p class="text-2xl mb-2">⚠️</p>
+                    <p class="font-bold text-yellow-700">Atenção</p>
+                    <p class="text-xs text-gray-500 mt-1">Solos mais secos que o normal. Risco de estresse hídrico.</p>
+                </div>
+                <div class="alert-card bg-white p-6 rounded-lg shadow-md border-b-4 border-orange-400">
+                    <p class="text-2xl mb-2">🔥</p>
+                    <p class="font-bold text-orange-700">Alerta</p>
+                    <p class="text-xs text-gray-500 mt-1">Seca moderada. Risco de incêndios e perdas agrícolas.</p>
+                </div>
+                <div class="alert-card bg-white p-6 rounded-lg shadow-md border-b-4 border-red-500">
+                    <p class="text-2xl mb-2">🚨</p>
+                    <p class="font-bold text-red-700">Emergência</p>
+                    <p class="text-xs text-gray-500 mt-1">Seca severa. Racionamento pode ser necessário.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="cidadao" class="min-h-screen flex flex-col justify-center">
+            <h2 class="text-3xl font-bold text-center mb-4">Ciência Cidadã em Ação</h2>
+            <p class="text-center max-w-3xl mx-auto mb-10">A tecnologia sozinha não é suficiente. A participação da comunidade é a peça-chave. Através do aplicativo Mangaba Cerrado, qualquer pessoa pode se tornar um "sentinela hídrico", enviando dados locais que ajudam a validar e aprimorar as previsões do modelo. Simule sua contribuição abaixo.</p>
+            <div class="section-card rounded-lg p-6 md:p-8 max-w-2xl mx-auto w-full">
+                <div id="contribution-form-container">
+                    <form id="contribution-form" class="space-y-4">
+                        <div>
+                            <label for="rain" class="block text-sm font-medium text-gray-700">Chuva nas últimas 24h (mm)</label>
+                            <input type="number" id="rain" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-[#A0522D] focus:border-[#A0522D]" placeholder="Medido no seu pluviômetro">
+                        </div>
+                        <div>
+                            <label for="observation" class="block text-sm font-medium text-gray-700">Nível do Córrego/Nascente Próximo</label>
+                            <select id="observation" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-[#A0522D] focus:border-[#A0522D]">
+                                <option>Normal para a época</option>
+                                <option>Um pouco abaixo do normal</option>
+                                <option>Muito baixo</option>
+                                <option>Completamente seco</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="w-full bg-[#A0522D] text-white font-bold py-3 px-4 rounded-lg hover:bg-[#804224] transition-colors">Enviar Observação</button>
+                    </form>
+                </div>
+                 <div id="thank-you-message" class="hidden text-center">
+                    <p class="text-6xl mb-4">💧</p>
+                    <h3 class="font-bold text-gray-800 text-2xl">Obrigado pela sua contribuição!</h3>
+                    <p class="text-md text-gray-600 mt-2">Seus dados ajudam a proteger as águas do Cerrado. Juntos, somos mais fortes.</p>
+                    <button id="reset-form-btn" class="mt-6 bg-gray-700 text-white font-semibold py-2 px-4 rounded-lg text-sm hover:bg-gray-800">Enviar Nova Observação</button>
+                </div>
+            </div>
+        </section>
+        
+        <section id="quiz" class="min-h-screen flex flex-col justify-center">
+            <h2 class="text-3xl font-bold text-center mb-4">Teste Seu Conhecimento</h2>
+            <p class="text-center max-w-3xl mx-auto mb-10">Agora que você explorou o projeto SPH Cerrado, teste o que aprendeu com este quiz!</p>
+            <div class="section-card rounded-lg p-6 md:p-8 max-w-2xl mx-auto">
+                <div id="quiz-container">
+                    <div id="quiz-question" class="text-lg font-semibold text-gray-800 mb-4"></div>
+                    <div id="quiz-options" class="space-y-3"></div>
+                    <div id="quiz-feedback" class="mt-4 text-sm font-semibold"></div>
+                    <button id="quiz-next-btn" class="mt-6 bg-[#A0522D] text-white font-bold py-2 px-6 rounded-lg hover:bg-[#804224] transition-colors w-full" disabled>Verificar</button>
+                </div>
+                <div id="quiz-results" class="hidden text-center">
+                    <h3 class="text-2xl font-bold mb-2">Quiz Concluído!</h3>
+                    <p class="text-lg">Seu resultado: <span id="quiz-score" class="font-black"></span></p>
+                    <p id="quiz-result-message" class="mt-2 text-gray-600"></p>
+                    <button id="quiz-restart-btn" class="mt-6 bg-gray-700 text-white font-bold py-2 px-6 rounded-lg hover:bg-gray-800 transition-colors">Refazer o Quiz</button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+    
+    <footer class="bg-white border-t py-6">
+        <div class="container mx-auto px-6 text-center text-gray-600">
+            <p class="font-bold">SPH Cerrado</p>
+            <p class="text-sm">Uma iniciativa do Centro Educacional Dona América Guimarães para o 14º Circuito de Ciências.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            
+            const reportData = {
+                modelPerformance: { r2_test: 0.79 },
+                featureImportance: {
+                    "Evapotranspiração": 0.412, "MNDWI": 0.317, "NDVI": 0.150,
+                    "Temperatura do Ar": 0.067, "Precipitação": 0.038
+                },
+                timeSeries: [
+                    {"date": "2020-01-01", "precipitation_sum": 320.1, "NDVI": 0.66},
+                    {"date": "2020-02-01", "precipitation_sum": 240.2, "NDVI": 0.63},
+                    {"date": "2020-03-01", "precipitation_sum": 205.4, "NDVI": 0.59},
+                    {"date": "2020-04-01", "precipitation_sum": 115.9, "NDVI": 0.55},
+                    {"date": "2020-05-01", "precipitation_sum": 30.1, "NDVI": 0.49},
+                    {"date": "2020-06-01", "precipitation_sum": 4.5, "NDVI": 0.43},
+                    {"date": "2020-07-01", "precipitation_sum": 1.2, "NDVI": 0.38},
+                    {"date": "2020-08-01", "precipitation_sum": 15.6, "NDVI": 0.35},
+                    {"date": "2020-09-01", "precipitation_sum": 50.3, "NDVI": 0.36},
+                    {"date": "2020-10-01", "precipitation_sum": 160.7, "NDVI": 0.49},
+                    {"date": "2020-11-01", "precipitation_sum": 225.4, "NDVI": 0.61},
+                    {"date": "2020-12-01", "precipitation_sum": 285.9, "NDVI": 0.64},
+                    {"date": "2021-01-01", "precipitation_sum": 330.2, "NDVI": 0.67},
+                    {"date": "2021-02-01", "precipitation_sum": 250.8, "NDVI": 0.64},
+                    {"date": "2021-03-01", "precipitation_sum": 215.1, "NDVI": 0.60},
+                    {"date": "2021-04-01", "precipitation_sum": 120.4, "NDVI": 0.56},
+                    {"date": "2021-05-01", "precipitation_sum": 35.2, "NDVI": 0.50},
+                    {"date": "2021-06-01", "precipitation_sum": 5.8, "NDVI": 0.44},
+                    {"date": "2021-07-01", "precipitation_sum": 1.8, "NDVI": 0.39},
+                    {"date": "2021-08-01", "precipitation_sum": 18.2, "NDVI": 0.36},
+                    {"date": "2021-09-01", "precipitation_sum": 55.9, "NDVI": 0.37},
+                    {"date": "2021-10-01", "precipitation_sum": 170.3, "NDVI": 0.50},
+                    {"date": "2021-11-01", "precipitation_sum": 235.1, "NDVI": 0.62},
+                    {"date": "2021-12-01", "precipitation_sum": 295.6, "NDVI": 0.65},
+                ]
+            };
+
+            const tooltipConfig = {
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            title: function(tooltipItems) {
+                                const item = tooltipItems[0];
+                                let label = item.chart.data.labels[item.dataIndex];
+                                return Array.isArray(label) ? label.join(' ') : label;
+                            }
+                        }
+                    }
+                }
+            };
+
+            new Chart(document.getElementById('precipNdviChart').getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: reportData.timeSeries.map(d => new Date(d.date).toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' })),
+                    datasets: [{
+                        label: 'Precipitação (mm)',
+                        data: reportData.timeSeries.map(d => d.precipitation_sum),
+                        backgroundColor: '#2981F6',
+                        borderColor: '#2981F6',
+                        yAxisID: 'y',
+                        order: 2
+                    }, {
+                        label: 'NDVI (Saúde da Vegetação)',
+                        data: reportData.timeSeries.map(d => d.NDVI),
+                        borderColor: '#8FBC8F',
+                        borderWidth: 3,
+                        yAxisID: 'y1',
+                        type: 'line',
+                        tension: 0.4,
+                        fill: false,
+                        order: 1
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false, ...tooltipConfig,
+                    scales: {
+                        y: { type: 'linear', display: true, position: 'left', title: { display: true, text: 'Precipitação (mm)', color: '#2981F6' } },
+                        y1: { type: 'linear', display: true, position: 'right', title: { display: true, text: 'NDVI', color: '#8FBC8F' }, grid: { drawOnChartArea: false } }
+                    }
+                }
+            });
+
+            new Chart(document.getElementById('modelAccuracyChart').getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Variação Explicada pelo Modelo', 'Não Explicada'],
+                    datasets: [{
+                        data: [reportData.modelPerformance.r2_test * 100, (1 - reportData.modelPerformance.r2_test) * 100],
+                        backgroundColor: ['#A0522D', '#EAEAEA'],
+                        borderColor: ['#FFFFFF'], borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false, ...tooltipConfig,
+                    plugins: { ...tooltipConfig.plugins, legend: { display: false },
+                        title: { display: true, text: `R² = ${reportData.modelPerformance.r2_test.toFixed(2)}`, font: { size: 24, weight: 'bold' }, color: '#A0522D' }
+                    },
+                    cutout: '60%'
+                }
+            });
+
+            const sortedFeatures = Object.entries(reportData.featureImportance).sort(([,a],[,b]) => b-a);
+            const featureColors = {
+                'Evapotranspiração': '#BDFF00',
+                'MNDWI': '#21018B',
+                'NDVI': '#06C664',
+                'Temperatura do Ar': '#FF0000',
+                'Precipitação': '#2981F6'
+            };
+            const backgroundColors = sortedFeatures.map(f => featureColors[f[0]] || '#cccccc');
+
+            new Chart(document.getElementById('featureImportanceChart').getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: sortedFeatures.map(f => f[0]),
+                    datasets: [{
+                        label: 'Importância Relativa',
+                        data: sortedFeatures.map(f => f[1]),
+                        backgroundColor: backgroundColors,
+                    }]
+                },
+                options: {
+                    indexAxis: 'y', responsive: true, maintainAspectRatio: false, ...tooltipConfig,
+                    plugins: { ...tooltipConfig.plugins, legend: { display: false } },
+                    scales: { x: { beginAtZero: true, title: { display: true, text: 'Score de Importância' } } }
+                }
+            });
+
+            const navLinks = document.querySelectorAll('.nav-link');
+            const sections = document.querySelectorAll('main section');
+
+            const observerOptions = {
+                root: null,
+                rootMargin: '0px',
+                threshold: 0.4
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        navLinks.forEach(link => {
+                            link.classList.remove('active');
+                            if (link.getAttribute('href').substring(1) === entry.target.id) {
+                                link.classList.add('active');
+                            }
+                        });
+                    }
+                });
+            }, observerOptions);
+
+            sections.forEach(section => {
+                observer.observe(section);
+            });
+
+            navLinks.forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    document.querySelector(this.getAttribute('href')).scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                });
+            });
+            
+            // --- Lógica da Ciência Cidadã ---
+            const contributionForm = document.getElementById('contribution-form');
+            const formContainer = document.getElementById('contribution-form-container');
+            const thankYouMessage = document.getElementById('thank-you-message');
+            const resetFormBtn = document.getElementById('reset-form-btn');
+
+            contributionForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                formContainer.classList.add('hidden');
+                thankYouMessage.classList.remove('hidden');
+            });
+
+            resetFormBtn.addEventListener('click', () => {
+                contributionForm.reset();
+                formContainer.classList.remove('hidden');
+                thankYouMessage.classList.add('hidden');
+            });
+
+            // --- Lógica do Quiz ---
+            const quizBank = [
+                { question: "Qual evento histórico é citado como a principal evidência da vulnerabilidade hídrica do DF?", options: ["A crise hídrica e o racionamento de 2017-2018.", "O relatório do TCDF de 2010.", "A expansão da fronteira agrícola.", "A criação do PPCerrado."], answer: "A crise hídrica e o racionamento de 2017-2018." },
+                { question: "Qual é a principal plataforma de computação em nuvem utilizada no projeto?", options: ["Google Earth Engine (GEE).", "Amazon Web Services (AWS).", "INMET.", "Jupyter Notebook."], answer: "Google Earth Engine (GEE)." },
+                { question: "Qual a relação temporal observada no gráfico entre o pico das chuvas e o pico de 'verdor' da vegetação (NDVI)?", options: ["Ocorrem ao mesmo tempo.", "O pico de NDVI ocorre antes da chuva.", "O pico de NDVI ocorre visivelmente após o pico de chuvas, indicando uma defasagem.", "Não há relação clara."], answer: "O pico de NDVI ocorre visivelmente após o pico de chuvas, indicando uma defasagem." },
+                { question: "Qual algoritmo de machine learning foi usado para criar o modelo 'SPH Cerrado'?", options: ["Regressão Linear.", "Random Forest Regressor.", "Redes Neurais.", "Análise de Percentis."], answer: "Random Forest Regressor." },
+                { question: "Qual foi a performance do modelo, medida pelo R², no conjunto de teste?", options: ["0,94.", "0,88.", "0,79.", "0,15."], answer: "0,79." },
+                { question: "Qual variável se revelou a mais importante para o modelo prever a umidade do solo?", options: ["Precipitação.", "Evapotranspiração.", "NDVI.", "Temperatura."], answer: "Evapotranspiração." },
+                { question: "Como o sistema de alertas traduz a previsão numérica em um nível de risco?", options: ["Utilizando a metodologia de percentis históricos.", "Através de uma fórmula de regressão linear.", "Com base apenas na precipitação prevista.", "Por meio de votação da comunidade."], answer: "Utilizando a metodologia de percentis históricos." },
+                { question: "Qual o principal objetivo do protótipo do app 'Mangaba Cerrado'?", options: ["Substituir completamente os satélites.", "Oferecer previsão do tempo para agricultores.", "Permitir a colaboração da comunidade com dados locais.", "Vender imagens de satélite."], answer: "Permitir a colaboração da comunidade com dados locais." },
+                { question: "O que significa validar dados de satélite com 'dados terrestres'?", options: ["Comparar com dados de outro satélite.", "Comparar com medições de estações do INMET em solo.", "Comparar com informações de drones.", "Comparar com enquetes da população."], answer: "Comparar com medições de estações do INMET em solo." },
+                { question: "Qual é a principal mudança de paradigma proposta pelo projeto SPH Cerrado?", options: ["Substituir monitores humanos por IA.", "Focar exclusivamente em grandes rios.", "Sair de uma gestão reativa para uma proativa.", "Privatizar o monitoramento da água."], answer: "Sair de uma gestão reativa para uma proativa." },
+                { question: "Por que o Cerrado é chamado de 'Berço das Águas'?", options: ["Por ter a maior quantidade de chuvas do Brasil.", "Por ser a origem de rios de 3 grandes bacias hidrográficas.", "Por conter o Aquífero Guarani em sua totalidade.", "Por ser o bioma mais úmido."], answer: "Por ser a origem de rios de 3 grandes bacias hidrográficas." },
+                { question: "O que o MNDWI é otimizado para detectar?", options: ["Saúde da vegetação.", "Áreas urbanas.", "Corpos d'água.", "Temperatura do solo."], answer: "Corpos d'água." },
+                { question: "Qual o nome do algoritmo de Machine Learning usado no projeto?", options: ["Regressão Linear", "Rede Neural", "Random Forest", "K-Means"], answer: "Random Forest" },
+                { question: "O que o R² de 0.79 do modelo significa?", options: ["Que o modelo está 79% correto.", "Que o modelo explica 79% da variação da umidade do solo.", "Que o modelo tem 21% de erro.", "Que 79% dos dados foram usados para treino."], answer: "Que o modelo explica 79% da variação da umidade do solo." },
+                { question: "A metodologia de percentis históricos serve para:", options: ["Calcular a média de chuva.", "Corrigir erros nos dados de satélite.", "Prever a temperatura futura.", "Contextualizar uma previsão em relação ao passado."], answer: "Contextualizar uma previsão em relação ao passado." }
+            ];
+
+            const quizContainer = document.getElementById('quiz-container');
+            const quizQuestionEl = document.getElementById('quiz-question');
+            const quizOptionsEl = document.getElementById('quiz-options');
+            const quizFeedbackEl = document.getElementById('quiz-feedback');
+            const quizNextBtn = document.getElementById('quiz-next-btn');
+            const quizResultsEl = document.getElementById('quiz-results');
+            const quizScoreEl = document.getElementById('quiz-score');
+            const quizResultMessageEl = document.getElementById('quiz-result-message');
+            const quizRestartBtn = document.getElementById('quiz-restart-btn');
+
+            let currentQuestionIndex = 0;
+            let score = 0;
+            let selectedOption = null;
+            let currentQuizQuestions = [];
+
+            function shuffleArray(array) {
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+            }
+
+            function startQuiz() {
+                currentQuestionIndex = 0;
+                score = 0;
+                shuffleArray(quizBank);
+                currentQuizQuestions = quizBank.slice(0, 5);
+                quizContainer.style.display = 'block';
+                quizResultsEl.style.display = 'none';
+                quizNextBtn.textContent = 'Verificar';
+                showQuestion();
+            }
+
+            function showQuestion() {
+                resetState();
+                const question = currentQuizQuestions[currentQuestionIndex];
+                quizQuestionEl.textContent = `(${currentQuestionIndex + 1}/${currentQuizQuestions.length}) ${question.question}`;
+                
+                question.options.forEach(option => {
+                    const button = document.createElement('button');
+                    button.textContent = option;
+                    button.classList.add('quiz-option', 'w-full', 'p-3', 'border-2', 'rounded-lg', 'text-left', 'hover:bg-gray-100');
+                    button.addEventListener('click', () => selectOption(button, option));
+                    quizOptionsEl.appendChild(button);
+                });
+            }
+
+            function resetState() {
+                quizFeedbackEl.textContent = '';
+                quizNextBtn.disabled = true;
+                while(quizOptionsEl.firstChild) {
+                    quizOptionsEl.removeChild(quizOptionsEl.firstChild);
+                }
+                selectedOption = null;
+            }
+
+            function selectOption(button, option) {
+                document.querySelectorAll('.quiz-option').forEach(btn => btn.classList.remove('selected'));
+                button.classList.add('selected');
+                selectedOption = option;
+                quizNextBtn.disabled = false;
+            }
+
+            function handleNextButton() {
+                if (quizNextBtn.textContent === 'Verificar') {
+                    checkAnswer();
+                } else {
+                    currentQuestionIndex++;
+                    if (currentQuestionIndex < currentQuizQuestions.length) {
+                        showQuestion();
+                        quizNextBtn.textContent = 'Verificar';
+                    } else {
+                        showResults();
+                    }
+                }
+            }
+
+            function checkAnswer() {
+                const question = currentQuizQuestions[currentQuestionIndex];
+                const isCorrect = selectedOption === question.answer;
+
+                if (isCorrect) {
+                    score++;
+                    quizFeedbackEl.textContent = "Resposta Correta!";
+                    quizFeedbackEl.style.color = 'green';
+                } else {
+                    quizFeedbackEl.textContent = `Incorreto. A resposta certa é: ${question.answer}`;
+                    quizFeedbackEl.style.color = 'red';
+                }
+
+                Array.from(quizOptionsEl.children).forEach(button => {
+                    if (button.textContent === question.answer) {
+                        button.classList.add('correct');
+                    } else if (button.textContent === selectedOption) {
+                        button.classList.add('incorrect');
+                    }
+                    button.disabled = true;
+                });
+                
+                quizNextBtn.textContent = 'Próxima Pergunta';
+                if (currentQuestionIndex === currentQuizQuestions.length - 1) {
+                    quizNextBtn.textContent = 'Ver Resultado';
+                }
+            }
+            
+            function showResults() {
+                quizContainer.style.display = 'none';
+                quizResultsEl.style.display = 'block';
+                quizScoreEl.textContent = `${score} / ${currentQuizQuestions.length}`;
+                
+                let message = "Continue estudando para aprimorar seus conhecimentos!";
+                if (score === currentQuizQuestions.length) {
+                    message = "Excelente! Você dominou os conceitos do projeto.";
+                } else if (score >= currentQuizQuestions.length / 2) {
+                    message = "Bom trabalho! Você compreendeu os pontos mais importantes.";
+                }
+                quizResultMessageEl.textContent = message;
+            }
+
+            quizNextBtn.addEventListener('click', handleNextButton);
+            quizRestartBtn.addEventListener('click', startQuiz);
+
+            startQuiz();
+        });
+    </script>
+</body>
+</html>
