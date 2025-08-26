@@ -10,6 +10,7 @@
     <title>SPH Cerrado - Análise Interativa</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
@@ -84,6 +85,7 @@
                 <a href="#solucao" class="nav-link font-semibold">A Solução</a>
                 <a href="#analise" class="nav-link font-semibold">Análise de Dados</a>
                 <a href="#modelo" class="nav-link font-semibold">Modelo Preditivo</a>
+                <a href="#futuro" class="nav-link font-semibold">Previsão Futura</a>
                 <a href="#alertas" class="nav-link font-semibold">Alertas e Ação</a>
                 <a href="#cidadao" class="nav-link font-semibold">Ciência Cidadã</a>
                 <a href="#quiz" class="nav-link font-semibold">Quiz</a>
@@ -149,6 +151,24 @@
             </div>
         </section>
 
+        <section id="futuro" class="min-h-screen flex flex-col justify-center">
+            <h2 class="text-3xl font-bold text-center mb-4">Navegando o Futuro da Água</h2>
+            <p class="text-center max-w-3xl mx-auto mb-10">O SPH Cerrado não apenas monitora o presente, mas nos ajuda a escolher um futuro melhor. Usando o conceito do "Cone de Futuros", podemos simular cenários e tomar decisões para alcançar um futuro mais seguro e resiliente. Escolha um cenário climático e veja uma simulação para os próximos 3 anos.</p>
+            <div class="section-card rounded-lg p-6 md:p-8">
+                <div class="flex flex-col md:flex-row items-center justify-center gap-4 mb-6">
+                    <button onclick="runForecastSimulation('dry')" class="bg-orange-500 text-white font-bold py-2 px-6 rounded-lg hover:bg-orange-600 transition-colors w-full md:w-auto">Cenário Seco</button>
+                    <button onclick="runForecastSimulation('normal')" class="bg-blue-500 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-600 transition-colors w-full md:w-auto">Cenário Normal</button>
+                    <button onclick="runForecastSimulation('wet')" class="bg-green-500 text-white font-bold py-2 px-6 rounded-lg hover:bg-green-600 transition-colors w-full md:w-auto">Cenário Chuvoso</button>
+                </div>
+                <div class="chart-container" style="height: 320px; max-height: 50vh;">
+                    <canvas id="simulationChart"></canvas>
+                </div>
+                 <div id="simulationSummary" class="mt-4 text-center font-semibold">
+                     <p>Selecione um cenário para iniciar a simulação.</p>
+                </div>
+            </div>
+        </section>
+
         <section id="alertas" class="min-h-screen flex flex-col justify-center">
             <h2 class="text-3xl font-bold text-center mb-4">Da Previsão à Ação: O Sistema de Alertas</h2>
             <p class="text-center max-w-3xl mx-auto mb-10">As previsões do modelo são traduzidas em um sistema de alerta de quatro níveis, comparando a umidade prevista com os dados históricos para determinar a severidade da seca. Isso permite que gestores e a comunidade tomem ações preventivas.</p>
@@ -175,7 +195,7 @@
                 </div>
             </div>
         </section>
-
+        
         <section id="cidadao" class="min-h-screen flex flex-col justify-center">
             <h2 class="text-3xl font-bold text-center mb-4">Ciência Cidadã em Ação</h2>
             <p class="text-center max-w-3xl mx-auto mb-10">A tecnologia sozinha não é suficiente. A participação da comunidade é a peça-chave. Através do aplicativo Mangaba Cerrado, qualquer pessoa pode se tornar um "sentinela hídrico", enviando dados locais que ajudam a validar e aprimorar as previsões do modelo. Simule sua contribuição abaixo.</p>
@@ -206,7 +226,7 @@
                 </div>
             </div>
         </section>
-        
+
         <section id="quiz" class="min-h-screen flex flex-col justify-center">
             <h2 class="text-3xl font-bold text-center mb-4">Teste Seu Conhecimento</h2>
             <p class="text-center max-w-3xl mx-auto mb-10">Agora que você explorou o projeto SPH Cerrado, teste o que aprendeu com este quiz!</p>
@@ -245,30 +265,30 @@
                     "Temperatura do Ar": 0.067, "Precipitação": 0.038
                 },
                 timeSeries: [
-                    {"date": "2020-01-01", "precipitation_sum": 320.1, "NDVI": 0.66},
-                    {"date": "2020-02-01", "precipitation_sum": 240.2, "NDVI": 0.63},
-                    {"date": "2020-03-01", "precipitation_sum": 205.4, "NDVI": 0.59},
-                    {"date": "2020-04-01", "precipitation_sum": 115.9, "NDVI": 0.55},
-                    {"date": "2020-05-01", "precipitation_sum": 30.1, "NDVI": 0.49},
-                    {"date": "2020-06-01", "precipitation_sum": 4.5, "NDVI": 0.43},
-                    {"date": "2020-07-01", "precipitation_sum": 1.2, "NDVI": 0.38},
-                    {"date": "2020-08-01", "precipitation_sum": 15.6, "NDVI": 0.35},
-                    {"date": "2020-09-01", "precipitation_sum": 50.3, "NDVI": 0.36},
-                    {"date": "2020-10-01", "precipitation_sum": 160.7, "NDVI": 0.49},
-                    {"date": "2020-11-01", "precipitation_sum": 225.4, "NDVI": 0.61},
-                    {"date": "2020-12-01", "precipitation_sum": 285.9, "NDVI": 0.64},
-                    {"date": "2021-01-01", "precipitation_sum": 330.2, "NDVI": 0.67},
-                    {"date": "2021-02-01", "precipitation_sum": 250.8, "NDVI": 0.64},
-                    {"date": "2021-03-01", "precipitation_sum": 215.1, "NDVI": 0.60},
-                    {"date": "2021-04-01", "precipitation_sum": 120.4, "NDVI": 0.56},
-                    {"date": "2021-05-01", "precipitation_sum": 35.2, "NDVI": 0.50},
-                    {"date": "2021-06-01", "precipitation_sum": 5.8, "NDVI": 0.44},
-                    {"date": "2021-07-01", "precipitation_sum": 1.8, "NDVI": 0.39},
-                    {"date": "2021-08-01", "precipitation_sum": 18.2, "NDVI": 0.36},
-                    {"date": "2021-09-01", "precipitation_sum": 55.9, "NDVI": 0.37},
-                    {"date": "2021-10-01", "precipitation_sum": 170.3, "NDVI": 0.50},
-                    {"date": "2021-11-01", "precipitation_sum": 235.1, "NDVI": 0.62},
-                    {"date": "2021-12-01", "precipitation_sum": 295.6, "NDVI": 0.65},
+                    {"date": "2020-01-01", "precipitation_sum": 320.1, "NDVI": 0.66, "soil_moisture": 0.38},
+                    {"date": "2020-02-01", "precipitation_sum": 240.2, "NDVI": 0.63, "soil_moisture": 0.36},
+                    {"date": "2020-03-01", "precipitation_sum": 205.4, "NDVI": 0.59, "soil_moisture": 0.34},
+                    {"date": "2020-04-01", "precipitation_sum": 115.9, "NDVI": 0.55, "soil_moisture": 0.31},
+                    {"date": "2020-05-01", "precipitation_sum": 30.1, "NDVI": 0.49, "soil_moisture": 0.27},
+                    {"date": "2020-06-01", "precipitation_sum": 4.5, "NDVI": 0.43, "soil_moisture": 0.25},
+                    {"date": "2020-07-01", "precipitation_sum": 1.2, "NDVI": 0.38, "soil_moisture": 0.23},
+                    {"date": "2020-08-01", "precipitation_sum": 15.6, "NDVI": 0.35, "soil_moisture": 0.22},
+                    {"date": "2020-09-01", "precipitation_sum": 50.3, "NDVI": 0.36, "soil_moisture": 0.24},
+                    {"date": "2020-10-01", "precipitation_sum": 160.7, "NDVI": 0.49, "soil_moisture": 0.30},
+                    {"date": "2020-11-01", "precipitation_sum": 225.4, "NDVI": 0.61, "soil_moisture": 0.35},
+                    {"date": "2020-12-01", "precipitation_sum": 285.9, "NDVI": 0.64, "soil_moisture": 0.37},
+                    {"date": "2021-01-01", "precipitation_sum": 330.2, "NDVI": 0.67, "soil_moisture": 0.39},
+                    {"date": "2021-02-01", "precipitation_sum": 250.8, "NDVI": 0.64, "soil_moisture": 0.37},
+                    {"date": "2021-03-01", "precipitation_sum": 215.1, "NDVI": 0.60, "soil_moisture": 0.35},
+                    {"date": "2021-04-01", "precipitation_sum": 120.4, "NDVI": 0.56, "soil_moisture": 0.32},
+                    {"date": "2021-05-01", "precipitation_sum": 35.2, "NDVI": 0.50, "soil_moisture": 0.28},
+                    {"date": "2021-06-01", "precipitation_sum": 5.8, "NDVI": 0.44, "soil_moisture": 0.26},
+                    {"date": "2021-07-01", "precipitation_sum": 1.8, "NDVI": 0.39, "soil_moisture": 0.24},
+                    {"date": "2021-08-01", "precipitation_sum": 18.2, "NDVI": 0.36, "soil_moisture": 0.23},
+                    {"date": "2021-09-01", "precipitation_sum": 55.9, "NDVI": 0.37, "soil_moisture": 0.25},
+                    {"date": "2021-10-01", "precipitation_sum": 170.3, "NDVI": 0.50, "soil_moisture": 0.31},
+                    {"date": "2021-11-01", "precipitation_sum": 235.1, "NDVI": 0.62, "soil_moisture": 0.36},
+                    {"date": "2021-12-01", "precipitation_sum": 295.6, "NDVI": 0.65, "soil_moisture": 0.38},
                 ]
             };
 
@@ -559,6 +579,87 @@
             quizRestartBtn.addEventListener('click', startQuiz);
 
             startQuiz();
+
+            // --- Lógica da Simulação de Futuro ---
+            let forecastChartInstance = null;
+            window.runForecastSimulation = function(scenario) {
+                const summaryElement = document.getElementById('simulationSummary');
+                
+                const historicalMoisture = reportData.timeSeries.map(d => d.soil_moisture);
+                const sortedMoisture = [...historicalMoisture].sort((a, b) => a - b);
+                
+                const p10 = sortedMoisture[Math.floor(sortedMoisture.length * 0.1)];
+                const p20 = sortedMoisture[Math.floor(sortedMoisture.length * 0.2)];
+                const p30 = sortedMoisture[Math.floor(sortedMoisture.length * 0.3)];
+
+                const monthlyPrecipAvg = Array(12).fill(0).map((_, month) => {
+                    const monthData = reportData.timeSeries.filter(d => new Date(d.date).getMonth() === month);
+                    return monthData.reduce((sum, d) => sum + (d.precipitation_sum || 0), 0) / (monthData.length || 1);
+                });
+
+                let precipScenario = [...monthlyPrecipAvg];
+                if (scenario === 'dry') precipScenario = monthlyPrecipAvg.map(p => p * 0.7); 
+                else if (scenario === 'wet') precipScenario = monthlyPrecipAvg.map(p => p * 1.3); 
+
+                let lastMoisture = reportData.timeSeries[reportData.timeSeries.length - 1].soil_moisture;
+                const forecast = [];
+                const forecastLabels = [];
+                const startDate = new Date(reportData.timeSeries[reportData.timeSeries.length - 1].date);
+                let alertCounts = { attention: 0, alert: 0, emergency: 0 };
+
+                for (let i = 1; i <= 36; i++) {
+                    const currentDate = new Date(startDate);
+                    currentDate.setMonth(startDate.getMonth() + i);
+                    const month = currentDate.getMonth();
+                    const precip = precipScenario[month];
+                    
+                    let nextMoisture = lastMoisture * 0.5 + precip * 0.0005 + 0.1;
+                    nextMoisture = Math.max(0.15, Math.min(nextMoisture, 0.42)); 
+                    
+                    forecast.push(nextMoisture);
+                    forecastLabels.push(currentDate.toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' }));
+                    lastMoisture = nextMoisture;
+
+                    if(nextMoisture < p10) alertCounts.emergency++;
+                    else if(nextMoisture < p20) alertCounts.alert++;
+                    else if(nextMoisture < p30) alertCounts.attention++;
+                }
+
+                const ctx = document.getElementById('simulationChart').getContext('2d');
+                if(forecastChartInstance) forecastChartInstance.destroy();
+                
+                forecastChartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: forecastLabels,
+                        datasets: [{
+                            label: 'Umidade do Solo Prevista', data: forecast,
+                            borderColor: '#A0522D', backgroundColor: 'rgba(160, 82, 45, 0.1)',
+                            borderWidth: 2, pointRadius: 1, fill: true, tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        scales: { y: { title: { display: true, text: 'Umidade do Solo (m³/m³)' }, min: 0.1, max: 0.45 } },
+                        plugins: {
+                            legend: { display: false },
+                            annotation: {
+                                annotations: {
+                                    emergency: { type: 'box', yMin: 0.1, yMax: p10, backgroundColor: 'rgba(239, 68, 68, 0.2)'},
+                                    alert: { type: 'box', yMin: p10, yMax: p20, backgroundColor: 'rgba(249, 115, 22, 0.2)'},
+                                    attention: { type: 'box', yMin: p20, yMax: p30, backgroundColor: 'rgba(234, 179, 8, 0.2)'},
+                                    normal: { type: 'box', yMin: p30, yMax: 0.45, backgroundColor: 'rgba(34, 197, 94, 0.1)'}
+                                }
+                            }
+                        }
+                    }
+                });
+                
+                summaryElement.innerHTML = `No <span class="font-bold">${scenario === 'dry' ? 'Cenário Seco' : (scenario === 'wet' ? 'Cenário Chuvoso' : 'Cenário Normal')}</span>, o sistema entraria em estado de 
+                <span class="text-yellow-600 font-bold">Atenção por ${alertCounts.attention} meses</span>, 
+                <span class="text-orange-600 font-bold">Alerta por ${alertCounts.alert} meses</span> e 
+                <span class="text-red-600 font-bold">Emergência por ${alertCounts.emergency} meses</span> ao longo dos próximos 3 anos.`;
+            }
         });
     </script>
 </body>
